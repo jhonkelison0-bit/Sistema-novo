@@ -11,7 +11,7 @@ app = Flask(__name__, static_folder='static')
 CORS(app)
 
 # ==========================================
-# SUAS CHAVES REAIS (JÁ PREENCHIDAS)
+# SUAS CHAVES AQUI
 # ==========================================
 API_ID = 32082548
 API_HASH = "84d9bae1c33f59eba8b187619d6f7"
@@ -33,7 +33,7 @@ def request_code():
         return jsonify({"success": False, "error": "Telefone invalido"}), 400
 
     try:
-        # A CORREÇÃO: Força a criação de um novo loop de eventos para o Telethon
+        # CRIA UM LOOP PARA ESSA THREAD DO FLASK
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
@@ -44,7 +44,7 @@ def request_code():
         clients[phone] = {'client': client, 'phone_code_hash': sent_code.phone_code_hash}
         return jsonify({"success": True}), 200
     except Exception as e:
-        print(f"ERRO NO TELEGRAM (request_code): {str(e)}")
+        print(f"ERRO NO TELEGRAM: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/verify_code', methods=['POST'])
@@ -75,7 +75,7 @@ def verify_code():
     except SessionPasswordNeededError:
         return jsonify({"success": False, "error": "2FA_REQUIRED"}), 200
     except Exception as e:
-        print(f"ERRO NO TELEGRAM (verify_code): {str(e)}")
+        print(f"ERRO NO TELEGRAM: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/verify_2fa', methods=['POST'])
